@@ -1,0 +1,173 @@
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title></title>
+		<link rel="stylesheet" href="./lib/bootstarp/css/bootstrap.min.css">
+	</head>
+	<body>
+		<a id="addBtn" class="btn btn-primary">添加</a>
+		<table class="table table-hover">
+			<thead>
+				<tr>
+					<td>ID</td>
+					<td>姓名</td>
+					<td>性别</td>
+					<td>爱好</td>
+					<td>操作</td>
+				</tr>
+			</thead>
+			<tbody id="table">
+				
+			</tbody>
+		</table>
+
+
+
+		<!-- Modal -->
+		<div class="modal fade" id="detailModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+		  <div class="modal-dialog" role="document">
+		    <div class="modal-content">
+		      <div class="modal-header">
+		        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+		        <h4 class="modal-title" id="myModalLabel">个人信息</h4>
+		      </div>
+		      <div class="modal-body">
+		        <form class="form-horizontal" id="detailForm">
+		        	<div class="form-group">
+					    <label for="id" class="col-sm-2 control-label">id</label>
+					    <div class="col-sm-10">
+					      <input type="text" class="form-control" id="id" placeholder="id" name="id">
+					    </div>
+					</div>
+					<div class="form-group">
+					    <label for="id" class="col-sm-2 control-label">姓名</label>
+					    <div class="col-sm-10">
+					      <input type="text" class="form-control" id="name" placeholder="name" name="name">
+					    </div>
+					</div>
+					<div class="form-group">
+					    <label for="id" class="col-sm-2 control-label">性别</label>
+					    <div class="col-sm-10">
+					      	<label class="radio-inline">
+							  <input type="radio"  value="1" name="sex"> 男
+							</label>
+							<label class="radio-inline">
+						  		<input type="radio"  value="0" name="sex"> 女
+							</label>
+					    </div>
+					</div>
+					<div class="form-group">
+					    <label for="id" class="col-sm-2 control-label">爱好</label>
+					    <div class="col-sm-10">
+					      	<label class="checkbox-inline">
+							  <input type="checkbox" id="inlineCheckbox1" value="1" name="hobby"> 看书
+							</label>
+							<label class="checkbox-inline">
+							  <input type="checkbox" id="inlineCheckbox2" value="2" name="hobby"> 旅行
+							</label>
+							<label class="checkbox-inline">
+							  <input type="checkbox" id="inlineCheckbox3" value="3" name="hobby"> 徒步
+							</label>
+					    </div>
+					</div>
+		        </form>
+		      </div>
+		      <div class="modal-footer">
+		        <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+		        <button type="button" id="submitBtn" class="btn btn-primary">保存</button>
+		        <input type="hidden"  id="flag" >
+		      </div>
+		    </div>
+		  </div>
+		</div><!--modal end-->
+
+		<script src="./lib/jquery.js"></script>
+		<script src="./lib/lovefield/lovefield.min.js"></script>
+		<script src="./lib/bootstarp/js/bootstrap.min.js"></script>
+		<script src="./lib/artTemplate/artTemplate.js"></script>
+		<script src="./js/dao.js"></script>
+		<script src="./lib/q.js"></script>
+		<script src="./lib/jquery.serializeJson.js"></script>
+		
+		<script>
+			var dao;
+			jQuery(document).ready(function($) {
+
+				dao=new Dao({
+					schema:'crud',
+					callDone:getAll,
+				});
+				$("#table").delegate('.deleteBtn', 'click', function(event) {
+					$this=$(this);
+					dao.delete($this.parent().attr('data-uuid')).then(function(d){
+						$this.parent().parent().remove();
+					});
+				});
+				$("#addBtn").click(function(){
+					$('#detailModal').modal('show');
+					$('#detailForm')[0].reset();
+					$("#flag").val("insert");
+				});
+				$("#submitBtn").click(function(){
+					var data=$("#detailForm").serializeJson();
+					data.hobby=data.hobby.toString();
+					if($("#flag").val()=="insert"){
+						dao.insert(data)
+							.then(function(){
+								$('#detailModal').modal('hide')
+								getAll();
+								alert("add success");
+							}).catch(function(){
+								alert('add fail');
+							});
+						}else{
+							dao.update(data)
+							.then(function(){
+								$('#detailModal').modal('hide')
+								getAll();
+								alert("update success");
+							}).catch(function(){
+								alert('update fail');
+							});
+						}
+					
+				});
+				$("#table").delegate('.editBtn', 'click', function(event) {
+					$this=$(this);
+					$('#detailForm')[0].reset();
+					dao.getOne($this.parent().attr('data-uuid')).then(function(data){
+						$('#detailModal').modal('show');
+						$("#id").val(data[0].id);
+						$("#name").val(data[0].name);
+						$("#detailForm input[name=sex][value='"+data[0].sex+"']")[0].checked=true;
+						$.each(data[0].hobby.split(','),function(i,n){
+							$("#detailForm input[name=hobby][value='"+n+"']")[0].checked=true;
+						});
+						$("#flag").val("update");
+					});
+				});
+
+
+			});
+			function getAll(){
+				dao.getAll().then(function(rows){
+							$("#table").html(template('table_template',{list:rows}));
+				})
+			}
+
+
+		</script>
+		<script id="table_template" type="text/html">
+			{{each list as n i}}
+				<tr>
+					<td>{{n.id}}</td>
+					<td>{{n.name}}</td>
+					<td>{{n.sex}}</td>
+					<td>{{n.hobby}}</td>
+					<td data-uuid='{{n.id}}'><a class="editBtn">修改</a>   <a class="deleteBtn">删除</a> </td>
+				</tr>
+			{{/each}}
+		</script>
+	</body>
+
+</html>

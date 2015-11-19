@@ -1,0 +1,59 @@
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title></title>
+		<script src="lovefield.min.js" ></script>
+		<script src="jquery.js" ></script>
+
+	</head>
+	<body>
+		<a onclick="createTable()">建立</a>
+		<a onclick="getConn()">获取Connection</a>
+		<a onclick="insert()">插入信息</a>
+		<a onclick="query()">查询信息</a>
+		<script type="text/javascript">
+		jQuery(document).ready(function($) {
+			createTable();
+					    // addIndex('idxDeadline', ['deadline'], false, lf.Order.DESC);
+
+		});
+		var db=null;
+		var schemaBuilder=null;
+		var item=null;
+		function getConn(){
+			
+				
+		};
+		function insert(){
+			var data={
+					  'id': 3,
+					  'description': 'description2',
+					  deadline:new Date(),
+					  done:false
+					}
+			var table= db.getSchema().table('Item')
+			var row = table.createRow(data);
+			db.insert().into(table).values([row]).exec();
+		}
+		function query(){
+			var table= db.getSchema().table('Item')
+			db.select().from(table).exec().then(function(rows) {
+				console.log(rows)
+			});
+		}
+		function createTable(){
+			schemaBuilder = lf.schema.create('todo4', 1);
+			schemaBuilder.createTable('Item').
+					    addColumn('id', lf.Type.INTEGER).
+					    addColumn('description', lf.Type.STRING).
+					    addColumn('deadline', lf.Type.DATE_TIME).
+					    addColumn('done', lf.Type.BOOLEAN).
+					    addPrimaryKey(['id']);
+			schemaBuilder.connect().then(function(database) {
+						 	db=database;
+    		});
+		}
+
+		</script>
+	</body>
+</html>
